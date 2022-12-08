@@ -1,50 +1,49 @@
-//customization
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
-open class SmartDevice internal constructor(val name: String, val category: String) {
+open class SmartDevice(val name: String, val category: String) {
 
     var deviceStatus = "online"
-    val deviceType = category
+        protected set
 
-    constructor(name: String, category: String, statusCode: Int) : this(name, category) {
-        deviceStatus =
-                when (statusCode) {
-                    0 -> "offline"
-                    1 -> "online"
-                    else -> "unknown"
-                }
-    }
+    open val deviceType: String = "unknown"
 
-    var speakVolume = 2
-        set(value) {
-            if (value in 0..100) {
-                field = value
-            }
-        }
-
-    fun turnOn() {
-        println("Smart device is turned on.")
+    open fun turnOn() {
         deviceStatus = "on"
     }
 
-    fun turnOff() {
-        println("Smart device is turned off.")
+    open fun turnOff() {
         deviceStatus = "off"
     }
 
     fun printDeviceInfo() {
-        println("Device name: $name, category: $category, type: $deviceType")
+        println(
+            "Device name: $name, Device category: $category, Device type: $deviceType, " +
+                "Device status: $deviceStatus"
+        )
     }
 }
 
 class SmartTvDevice(deviceName: String, deviceCategory: String) :
-        SmartDevice(name = deviceName, category = deviceCategory) {
+    SmartDevice(name = deviceName, category = deviceCategory) {
 
-    // 在 SmartTvDevice 類別中，使用委派類別來定義 speakerVolume 和 channelNumber 屬性
-    var speakerVolume by RangeRegulator(initialValue = 0, minValue = 0, maxValue = 100)
+    override val deviceType: String = "Smart TV"
 
-    var channelNumber by RangeRegulator(initialValue = 1, minValue = 0, maxValue = 200)
+    private var speakerVolume by RangeRegulator(initialValue = 2, minValue = 0, maxValue = 100)
+    private var channelNumber by RangeRegulator(initialValue = 1, minValue = 0, maxValue = 200)
+
+    override fun turnOn() {
+        super.turnOn()
+        println(
+            "$name is turned on. Speaker volume set to $speakerVolume and channel number is " +
+                "set to $channelNumber."
+        )
+    }
+
+    override fun turnOff() {
+        super.turnOff()
+        println("$name turned off")
+    }
 
     fun increaseSpeakerVolume() {
         speakerVolume++
@@ -68,10 +67,22 @@ class SmartTvDevice(deviceName: String, deviceCategory: String) :
 }
 
 class SmartLightDevice(deviceName: String, deviceCategory: String) :
-        SmartDevice(name = deviceName, category = deviceCategory) {
+    SmartDevice(name = deviceName, category = deviceCategory) {
 
-    // 在 SmartLightDevice 類別中，使用委派類別來定義 brightnessLevel 屬性
-    var brightnessLevel by RangeRegulator(initialValue = 2, minValue = 0, maxValue = 100)
+    override val deviceType: String = "Smart Light"
+    private var brightnessLevel by RangeRegulator(initialValue = 2, minValue = 0, maxValue = 100)
+
+    override fun turnOn() {
+        super.turnOn()
+        brightnessLevel = 2
+        println("$name is turned on. The brightness level is $brightnessLevel.")
+    }
+
+    override fun turnOff() {
+        super.turnOff()
+        brightnessLevel = 0
+        println("$name turned off")
+    }
 
     fun increaseBrightness() {
         brightnessLevel++
@@ -85,11 +96,9 @@ class SmartLightDevice(deviceName: String, deviceCategory: String) :
 }
 
 class SmartHome(val smartTvDevice: SmartTvDevice, val smartLightDevice: SmartLightDevice) {
-    var deviceTurnOnCount = 0
-        private set // 僅能讀取無法修改，若直接在前方加上 private 會變成 private field，無法被外部存取
-    // 詳細說明：https://ithelp.ithome.com.tw/articles/10204643
 
-    var 
+    var deviceTurnOnCount = 0
+        private set
 
     fun turnOnTv() {
         deviceTurnOnCount++
@@ -97,16 +106,30 @@ class SmartHome(val smartTvDevice: SmartTvDevice, val smartLightDevice: SmartLig
     }
 
     fun turnOffTv() {
-        deviceTurnOnCount--
-        smartTvDevice.turnOff()
+        if (smartTvDevice.deviceStatus == "on") {
+            deviceTurnOnCount--
+            smartTvDevice.turnOff()
+        }
     }
 
     fun increaseTvVolume() {
-        smartTvDevice.increaseSpeakerVolume()
+        if (smartTvDevice.deviceStatus == "on")
+            smartTvDevice.increaseSpeakerVolume()
+    }
+
+    fun decreaseTvVolume() {
+        if (smartTvDevice.deviceStatus == "on")
+            smartTvDevice.decreaseSpeakerVolume() 
     }
 
     fun changeTvChannelToNext() {
-        smartTvDevice.nextChannel()
+        if (smartTvDevice.deviceStatus == "on")
+            smartTvDevice.nextChannel()
+    }
+
+    fun changeTvChannelToPrevious() {
+        if (smartTvDevice.deviceStatus == "on")
+            smartTvDevice.previousChannel()
     }
 
     fun turnOnLight() {
@@ -115,23 +138,51 @@ class SmartHome(val smartTvDevice: SmartTvDevice, val smartLightDevice: SmartLig
     }
 
     fun turnOffLight() {
-        deviceTurnOnCount--
-        smartLightDevice.turnOff()
+        if (smartTvDevice.deviceStatus == "on") {
+            deviceTurnOnCount--
+            smartLightDevice.turnOff()
+        }else {
+            println("Turn off the light first.")
+        }
     }
 
     fun increaseLightBrightness() {
-        smartLightDevice.increaseBrightness()
+        if (smartTvDevice.deviceStatus == "on")
+            smartLightDevice.increaseBrightness()
+    }
+
+    fun decreaseLightBrightness() {
+        if (smartTvDevice.deviceStatus == "on")
+            smartLightDevice.decreaseBrightness()
     }
 
     fun turnOffAllDevices() {
-        turnOffTv()
-        turnOffLight()
+        if (smartTvDevice.deviceStatus == "on")
+            turnOffTv()   
+        else println("Turn on the TV first.")
+        if (smartLightDevice.deviceStatus == "on")
+            turnOffLight()
+        else println("Turn on the TV first.")
+    }
+
+    fun printSmartTvInfo() {
+        if (smartTvDevice.deviceStatus == "on")
+            smartTvDevice.printDeviceInfo()
+    }
+
+    fun printSmartLightInfo() {
+        if (smartLightDevice.deviceStatus == "on")
+            smartLightDevice.printDeviceInfo()
     }
 }
 
-class RangeRegulator(initialValue: Int, private val minValue: Int, private val maxValue: Int) :
-        ReadWriteProperty<Any?, Int> {
-    var fieldData = initialValue
+class RangeRegulator(
+    initialValue: Int,
+    private val minValue: Int,
+    private val maxValue: Int
+) : ReadWriteProperty<Any?, Int> {
+
+    private var fieldData = initialValue
 
     override fun getValue(thisRef: Any?, property: KProperty<*>): Int {
         return fieldData
@@ -145,11 +196,10 @@ class RangeRegulator(initialValue: Int, private val minValue: Int, private val m
 }
 
 fun main() {
-    val smartHome =
-            SmartHome(
-                    SmartTvDevice(deviceName = "Android TV", deviceCategory = "Entertainment"),
-                    SmartLightDevice(deviceName = "Google light", deviceCategory = "Utility")
-            )
+    val smartHome = SmartHome(
+        SmartTvDevice(deviceName = "Android TV", deviceCategory = "Entertainment"),
+        SmartLightDevice(deviceName = "Google light", deviceCategory = "Utility")
+    )
 
     smartHome.turnOnTv()
     smartHome.turnOnLight()
@@ -159,6 +209,7 @@ fun main() {
     smartHome.increaseTvVolume()
     smartHome.changeTvChannelToNext()
     smartHome.increaseLightBrightness()
+    smartHome.decreaseLightBrightness()
     println()
 
     smartHome.turnOffAllDevices()
