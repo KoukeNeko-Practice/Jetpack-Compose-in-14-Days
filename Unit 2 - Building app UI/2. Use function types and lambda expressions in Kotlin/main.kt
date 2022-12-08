@@ -24,15 +24,21 @@
 
 fun main() {
 
-    val coins: (Int) -> String = { quantity ->
-        "$quantity quarters"
-    }
+    // val coins: (Int) -> String = { quantity ->
+    //     "$quantity quarters"
+    // }
+
+    // val coins: (Int) -> String = {
+    //     "$it quarters" //變更 "$quantity quarters" 字串範本，以使用 $it 參照單一參數
+    // }
 
     val cupcake: (Int) -> String = {
         "Have a cupcake!"
     }
 
-    val treatFunction = trickOrTreat(false, coins)
+    // val treatFunction = trickOrTreat(false, coins)
+    // val treatFunction = trickOrTreat(false, { "$it quarters" })
+    val treatFunction = trickOrTreat(false){ "$it quarters" }
     val trickFunction = trickOrTreat(true, cupcake)
     val trickFunction_null = trickOrTreat(true, null)
     treatFunction()
