@@ -44,6 +44,10 @@ fun main() {
     treatFunction()
     trickFunction()
     trickFunction_null()
+
+    repeat(5) {
+        treatFunction()
+    }
 }
 
 fun trickOrTreat(isTrick: Boolean, extraTreat:  ((Int) -> String)?): () -> Unit {
