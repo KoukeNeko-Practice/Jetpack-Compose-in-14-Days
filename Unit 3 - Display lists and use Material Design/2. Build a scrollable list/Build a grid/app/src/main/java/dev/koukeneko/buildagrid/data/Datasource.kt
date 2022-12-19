@@ -19,3 +19,7 @@ object DataSource {
         Topic(R.string.tech, 118, R.drawable.tech)
     )
 }
+
+fun getAllTopicData(): List<Topic> {
+    return DataSource.topics
+}
